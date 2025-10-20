@@ -45,24 +45,37 @@ export default function Scoreboard() {
   };
 
   const handleEndMatch = () => {
+    const tg = (window as any).Telegram?.WebApp;
+
+    // собери payload из Redux
     const payload = {
       type: 'match_result',
-      teamA,                // команды из Redux
+      teamA,
       teamB,
-      sets: buildPayloadSets(), // все завершённые + текущий (если есть)
+      sets: buildPayloadSets(), // как мы делали ранее
     };
 
-    const tg = (window as any).Telegram?.WebApp;
-    if (tg?.sendData) {
-      tg.sendData(JSON.stringify(payload));
+    if (!tg || !tg.sendData) {
+      console.warn('Telegram WebApp API недоступен. Откройте приложение из бота.');
+      alert('Откройте это приложение через кнопку в боте Telegram, иначе отправка не сработает.');
+      return;
     }
 
-    // Локально чистим состояние матча
-    dispatch(endMatch());
+    try {
+      tg.sendData(JSON.stringify(payload)); // 1) отправка
+      // tg.close(); // опционально: закрыть окно после отправки
+    } catch (e) {
+      console.error('Ошибка sendData', e);
+      return; // не сбрасываем матч, если отправка не удалась
+    }
 
-    // При желании закрыть мини-приложение сразу:
-    tg?.close();
+    // 2) Сбрасываем матч ЧУТЬ ПОЗЖЕ, чтобы UI не исчезал мгновенно
+    // (дать WebView шанс отправить данные)
+    setTimeout(() => {
+      dispatch(endMatch());
+    }, 150); // 100–200 ms обычно достаточно
   };
+
 
   return (
     <Card>
