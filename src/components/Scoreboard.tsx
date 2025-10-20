@@ -85,11 +85,9 @@ export default function Scoreboard() {
         <Container className="mb-3">
           <Row className="g-3 align-items-center">
             <Col>
-              <div className="fw-semibold">Команда A</div>
               <div className="text-muted">{teamA.join(' — ')}</div>
             </Col>
             <Col>
-              <div className="fw-semibold">Команда B</div>
               <div className="text-muted">{teamB.join(' — ')}</div>
             </Col>
           </Row>
@@ -98,13 +96,19 @@ export default function Scoreboard() {
         <Container className="mb-3">
             {sets.map((s, idx) => (
                 <Row key={idx}>
-                    <Col>{s.a} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
-                        ? ` (TB ${s.tbA})`
-                        : ''}
+                    <Col>
+                      <div className={`fs-3 ${s.a >= s.b ? 'fw-bold' : ''}`}>
+                        {s.a} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
+                          ? ` (TB ${s.tbA})`
+                          : ''}
+                      </div>
                     </Col>
-                    <Col>{s.b} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
-                        ? ` (TB ${s.tbB})`
-                        : ''}
+                    <Col>
+                      <div className={`fs-3 ${s.b >= s.a ? 'fw-bold' : ''}`}>
+                        {s.b} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
+                          ? ` (TB ${s.tbB})`
+                          : ''}
+                      </div>
                     </Col>
                 </Row>
             ))}
