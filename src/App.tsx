@@ -7,24 +7,17 @@ function App() {
     const tg = (window as any).Telegram?.WebApp;
     if (!tg) return;
 
-    tg.ready(); // говорим Telegram, что приложение готово
+    tg.ready(); // сообщаем Telegram, что приложение готово
 
-    // Настройка кнопки
-    tg.MainButton.setText('Отправить результат');
-    tg.MainButton.show();
-
-    const handleClick = () => {
-      const data = {
-        type: 'match_result',
-        timestamp: Date.now(),
-        message: 'Пример результата'
-      };
-      tg.sendData(JSON.stringify(data));
-    };
-
-    tg.MainButton.onClick(handleClick);
-
-    return () => tg.MainButton.offClick(handleClick);
+    // 🔽 гарантированно скрыть системную кнопку (если где-то раньше показывали)
+    try {
+      tg.MainButton.hide();
+      // на всякий случай снимаем любые старые обработчики
+      // (если были задеплоены раньше)
+      tg.MainButton.offClick?.(() => {});
+    } catch (_) {
+      /* ignore */
+    }
   }, []);
 
   return (
