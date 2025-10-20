@@ -23,6 +23,18 @@ export default function Scoreboard() {
     tiebreakActive, tbA, tbB,
   } = useAppSelector(s => s.match);
 
+  const handleEndMatch = () => {
+    dispatch(endMatch());
+    const tg = (window as any).Telegram?.WebApp;
+    tg.sendData(JSON.stringify({
+      type: 'match_result',
+      teamA: ['Nadal'],        // возьми из своего Redux
+      teamB: ['Djokovic'],
+      sets: [{ a: 6, b: 4 }, { a: 7, b: 6, tbA: 7, tbB: 5, tiebreak: true }]
+    }));
+
+  }
+
   return (
     <Card>
       <Card.Body>
@@ -144,17 +156,7 @@ export default function Scoreboard() {
         <Container>
           <Row className="g-2">
             <Col xs={12} md="auto">
-              <Button
-                variant="outline-secondary"
-                onClick={() => {
-                    dispatch(resetCurrentSet());
-                }}
-                >
-                Сбросить текущий сет
-                </Button>
-            </Col>
-            <Col xs={12} md="auto">
-              <Button variant="outline-danger" onClick={() => dispatch(endMatch())}>
+              <Button variant="outline-danger" onClick={() => handleEndMatch()}>
                 Завершить матч
               </Button>
             </Col>
