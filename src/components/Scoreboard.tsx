@@ -23,17 +23,46 @@ export default function Scoreboard() {
     tiebreakActive, tbA, tbB,
   } = useAppSelector(s => s.match);
 
-  const handleEndMatch = () => {
-    dispatch(endMatch());
-    const tg = (window as any).Telegram?.WebApp;
-    tg.sendData(JSON.stringify({
-      type: 'match_result',
-      teamA: ['Nadal'],        // возьми из своего Redux
-      teamB: ['Djokovic'],
-      sets: [{ a: 6, b: 4 }, { a: 7, b: 6, tbA: 7, tbB: 5, tiebreak: true }]
-    }));
+  // Собираем массив сетов для отправки:
+  const buildPayloadSets = () => {
+    const result = [...sets]; // завершённые сеты уже есть в Redux
 
-  }
+    // Если идёт тай-брейк — текущий сет это 6–6 + очки TB
+    if (tiebreakActive) {
+      result.push({
+        a: 6,
+        b: 6,
+        tiebreak: true,
+        tbA,
+        tbB,
+      });
+    } else if (gamesA > 0 || gamesB > 0) {
+      // Иначе, если есть незавершённый сет в геймах — добавим его как есть
+      result.push({ a: gamesA, b: gamesB });
+    }
+
+    return result;
+  };
+
+  const handleEndMatch = () => {
+    const payload = {
+      type: 'match_result',
+      teamA,                // команды из Redux
+      teamB,
+      sets: buildPayloadSets(), // все завершённые + текущий (если есть)
+    };
+
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.sendData) {
+      tg.sendData(JSON.stringify(payload));
+    }
+
+    // Локально чистим состояние матча
+    dispatch(endMatch());
+
+    // При желании закрыть мини-приложение сразу:
+    tg?.close();
+  };
 
   return (
     <Card>
