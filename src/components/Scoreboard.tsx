@@ -1,18 +1,17 @@
 // src/components/Scoreboard.tsx
+import { useState } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
-import ListGroup from 'react-bootstrap/ListGroup';
-import Badge from 'react-bootstrap/Badge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   endMatch,
   gameTo, undoGame,
   pointTB, undoPointTB,
-  resetCurrentSet,
 } from '../store/matchSlice';
+import MatchSummary, { MatchPayload } from './MatchSummary';
 
 export default function Scoreboard() {
   const dispatch = useAppDispatch();
@@ -23,36 +22,27 @@ export default function Scoreboard() {
     tiebreakActive, tbA, tbB,
   } = useAppSelector(s => s.match);
 
+  const [summary, setSummary] = useState<MatchPayload | null>(null);
+
   // Собираем массив сетов для отправки:
   const buildPayloadSets = () => {
-    const result = [...sets]; // завершённые сеты уже есть в Redux
-
-    // Если идёт тай-брейк — текущий сет это 6–6 + очки TB
+    const result = [...sets];
     if (tiebreakActive) {
-      result.push({
-        a: 6,
-        b: 6,
-        tiebreak: true,
-        tbA,
-        tbB,
-      });
+      result.push({ a: 6, b: 6, tiebreak: true, tbA, tbB });
     } else if (gamesA > 0 || gamesB > 0) {
-      // Иначе, если есть незавершённый сет в геймах — добавим его как есть
       result.push({ a: gamesA, b: gamesB });
     }
-
     return result;
   };
 
   const handleEndMatch = () => {
     const tg = (window as any).Telegram?.WebApp;
 
-    // собери payload из Redux
-    const payload = {
+    const payload: MatchPayload = {
       type: 'match_result',
       teamA,
       teamB,
-      sets: buildPayloadSets(), // как мы делали ранее
+      sets: buildPayloadSets(),
     };
 
     if (!tg || !tg.sendData) {
@@ -62,21 +52,30 @@ export default function Scoreboard() {
     }
 
     try {
-      tg.sendData(JSON.stringify(payload)); // 1) отправка
-      // tg.close(); // опционально: закрыть окно после отправки
+      tg.sendData(JSON.stringify(payload));
     } catch (e) {
       console.error('Ошибка sendData', e);
-      return; // не сбрасываем матч, если отправка не удалась
+      return;
     }
 
-    // 2) Сбрасываем матч ЧУТЬ ПОЗЖЕ, чтобы UI не исчезал мгновенно
-    // (дать WebView шанс отправить данные)
-    setTimeout(() => {
-      dispatch(endMatch());
-    }, 150); // 100–200 ms обычно достаточно
+    // показываем локальное резюме
+    setSummary(payload);
+
+    // при желании можно закрыть WebApp:
+    // tg.close();
   };
 
+  const startNewMatch = () => {
+    setSummary(null);
+    dispatch(endMatch());
+  };
 
+  // Если есть summary — показываем итог вместо табло
+  if (summary) {
+    return <MatchSummary payload={summary} onNewMatch={startNewMatch} />;
+  }
+
+  // --- ниже твой прежний UI табло без изменений дизайна ---
   return (
     <Card>
       <Card.Body>
@@ -94,35 +93,35 @@ export default function Scoreboard() {
         </Container>
 
         <Container className="mb-3">
-            {sets.map((s, idx) => (
-                <Row key={idx}>
-                    <Col>
-                      <div className={`fs-3 ${s.a >= s.b ? 'fw-bold' : ''}`}>
-                        {s.a} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
-                          ? ` (TB ${s.tbA})`
-                          : ''}
-                      </div>
-                    </Col>
-                    <Col>
-                      <div className={`fs-3 ${s.b >= s.a ? 'fw-bold' : ''}`}>
-                        {s.b} {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
-                          ? ` (TB ${s.tbB})`
-                          : ''}
-                      </div>
-                    </Col>
-                </Row>
-            ))}
+          {sets.map((s, idx) => (
+            <Row key={idx}>
+              <Col>
+                <div className={`fs-3 ${s.a >= s.b ? 'fw-bold' : ''}`}>
+                  {s.a}
+                  {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
+                    ? ` (TB ${s.tbA})`
+                    : ''}
+                </div>
+              </Col>
+              <Col>
+                <div className={`fs-3 ${s.b >= s.a ? 'fw-bold' : ''}`}>
+                  {s.b}
+                  {s.tiebreak && typeof s.tbA === 'number' && typeof s.tbB === 'number'
+                    ? ` (TB ${s.tbB})`
+                    : ''}
+                </div>
+              </Col>
+            </Row>
+          ))}
         </Container>
 
         {!tiebreakActive ? (
           <>
             <Container className="mb-2">
-                <hr />
+              <hr />
               <Row className="g-3 text-center">
                 <Col>
-                  <div className="display-6">
-                    {gamesA}
-                  </div>
+                  <div className="display-6">{gamesA}</div>
                   <Button className="w-100 mt-2" onClick={() => dispatch(gameTo('A'))}>
                     + гейм A
                   </Button>
@@ -135,9 +134,7 @@ export default function Scoreboard() {
                   </Button>
                 </Col>
                 <Col>
-                  <div className="display-6">
-                    {gamesB}
-                  </div>
+                  <div className="display-6">{gamesB}</div>
                   <Button className="w-100 mt-2" onClick={() => dispatch(gameTo('B'))}>
                     + гейм B
                   </Button>
@@ -161,9 +158,7 @@ export default function Scoreboard() {
             <Container className="mb-2">
               <Row className="g-3 text-center">
                 <Col>
-                  <div className="display-6">
-                    TB: {tbA}
-                  </div>
+                  <div className="display-6">TB: {tbA}</div>
                   <Button className="w-100 mt-2" onClick={() => dispatch(pointTB('A'))}>
                     + Очко TB A
                   </Button>
@@ -176,9 +171,7 @@ export default function Scoreboard() {
                   </Button>
                 </Col>
                 <Col>
-                  <div className="display-6">
-                    TB: {tbB}
-                  </div>
+                  <div className="display-6">TB: {tbB}</div>
                   <Button className="w-100 mt-2" onClick={() => dispatch(pointTB('B'))}>
                     + Очко TB B
                   </Button>
@@ -202,7 +195,7 @@ export default function Scoreboard() {
         <Container>
           <Row className="g-2">
             <Col xs={12} md="auto">
-              <Button variant="outline-danger" onClick={() => handleEndMatch()}>
+              <Button variant="outline-danger" onClick={handleEndMatch}>
                 Завершить матч
               </Button>
             </Col>
