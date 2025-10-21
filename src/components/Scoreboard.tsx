@@ -75,6 +75,24 @@ export default function Scoreboard() {
     return <MatchSummary payload={summary} onNewMatch={startNewMatch} />;
   }
 
+  const handlePing = () => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (!tg?.sendData) {
+      console.warn('Telegram WebApp API недоступен');
+      alert('Открой приложение через бота');
+      return;
+    }
+
+    const payload = {
+      type: 'ping',
+      timestamp: Date.now(),
+      message: 'Ping from frontend'
+    };
+
+    console.log('Sending ping:', payload);
+    tg.sendData(JSON.stringify(payload));
+  };
+
   // --- ниже твой прежний UI табло без изменений дизайна ---
   return (
     <Card>
@@ -197,6 +215,9 @@ export default function Scoreboard() {
             <Col xs={12} md="auto">
               <Button variant="outline-danger" onClick={handleEndMatch}>
                 Завершить матч
+              </Button>
+              <Button variant="outline-secondary" onClick={handlePing}>
+                Ping 🔔
               </Button>
             </Col>
           </Row>
