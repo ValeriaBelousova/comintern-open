@@ -62,7 +62,7 @@ export default function Scoreboard() {
     setSummary(payload);
 
     // при желании можно закрыть WebApp:
-    // tg.close();
+    tg.close();
   };
 
   const startNewMatch = () => {
