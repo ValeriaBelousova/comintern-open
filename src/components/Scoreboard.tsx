@@ -1,5 +1,4 @@
-// src/components/Scoreboard.tsx
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
@@ -9,15 +8,48 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { endMatch, gameTo, undoGame, pointTB, undoPointTB } from '../store/matchSlice';
 import MatchSummary, { MatchPayload } from './MatchSummary';
 import DebugPanel from './DebugPanel';
-import { useTelegram } from '../hooks/useTelegram';
+
+// ✅ tma.js — берём launch params и «сырые» initData
+import { useRawInitData, useLaunchParams } from '@tma.js/sdk-react';
 
 export default function Scoreboard() {
   const dispatch = useAppDispatch();
   const { teamA, teamB, gamesA, gamesB, sets, tiebreakActive, tbA, tbB } = useAppSelector(s => s.match);
 
-  const { tg, available, user } = useTelegram();
+  // raw initData: непустая строка => запущено из Telegram
+  const rawInitData = useRawInitData();
+  const lp = useLaunchParams();
+
+  const available = useMemo(
+    () => typeof rawInitData === 'string' && rawInitData.length > 0,
+    [rawInitData]
+  );
+
+  // было
+    // const platform = lp?.platform ?? 'unknown';
+
+    // стало — принудительно приводим к строке
+    const platform = useMemo(
+      () => String((lp as any)?.platform ?? 'unknown'),
+      [lp]
+    );
+
+  // user (в reply-клавиатуре может отсутствовать — это ок)
+  const userLabel = useMemo(() => {
+    // безопасно достаём user
+    const u = (lp?.initData as any)?.user as
+      | { id: number; username?: string; first_name?: string }
+      | undefined;
+
+    if (!u) return '—';
+    return u.username ? `@${u.username} (#${u.id})` : `${u.first_name ?? ''} (#${u.id})`;
+  }, [lp]);
+
+
   const [summary, setSummary] = useState<MatchPayload | null>(null);
   const [lastPayload, setLastPayload] = useState<any>(null);
+
+  const tg = (window as any).Telegram?.WebApp;
 
   const buildPayloadSets = () => {
     const result = [...sets];
@@ -72,7 +104,7 @@ export default function Scoreboard() {
     }
 
     setSummary(payload);
-    // при желании можно закрыть после небольшой задержки:
+    // при желании:
     // setTimeout(() => tg?.close?.(), 250);
   };
 
@@ -86,8 +118,8 @@ export default function Scoreboard() {
       <>
         <DebugPanel
           available={available}
-          platform={tg?.platform}
-          user={user}
+          platform={platform}
+          user={userLabel}
           lastPayload={lastPayload}
           onPing={handlePing}
           onResend={resendLast}
@@ -101,14 +133,13 @@ export default function Scoreboard() {
     <>
       <DebugPanel
         available={available}
-        platform={tg?.platform}
-        user={user}
+        platform={platform}
+        user={userLabel}
         lastPayload={lastPayload}
         onPing={handlePing}
         onResend={resendLast}
       />
 
-      {/* дальше твоя карточка, как была */}
       <Card>
         <Card.Body>
           <Card.Title>Текущий матч</Card.Title>

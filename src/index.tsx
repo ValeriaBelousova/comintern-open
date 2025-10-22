@@ -5,8 +5,14 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Provider } from 'react-redux';
 import { store } from './store';
+import { init, backButton } from '@tma.js/sdk-react';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+// Инициализируем SDK один раз
+init();
+// (пример) монтируем BackButton, если нужен управляемый доступ к нему
+backButton.mount();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
