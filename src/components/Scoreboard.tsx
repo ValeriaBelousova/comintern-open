@@ -10,7 +10,7 @@ import MatchSummary, { MatchPayload } from './MatchSummary';
 import DebugPanel from './DebugPanel';
 
 // ✅ tma.js — берём launch params и «сырые» initData
-import { useRawInitData, useLaunchParams } from '@tma.js/sdk-react';
+import { useRawInitData, useLaunchParams, sendData } from '@tma.js/sdk-react';
 
 export default function Scoreboard() {
   const dispatch = useAppDispatch();
@@ -62,15 +62,10 @@ export default function Scoreboard() {
   };
 
   const handlePing = () => {
-    if (!available || !tg?.sendData) {
-      alert('Открой приложение через кнопку в боте Telegram.');
-      return;
-    }
     const payload = { type: 'ping', timestamp: Date.now(), message: 'Ping from frontend' };
     setLastPayload(payload);
     console.log('Sending ping:', payload);
-    tg.showAlert?.('Ping отправлен ✅');
-    tg.sendData(JSON.stringify(payload));
+    sendData(JSON.stringify(payload));
   };
 
   const resendLast = () => {
