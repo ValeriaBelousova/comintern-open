@@ -85,7 +85,7 @@ export default function Scoreboard() {
     try {
       const json = JSON.stringify(payload);
       console.log('Sending to bot:', json);
-      sendData(JSON.stringify(json));
+      sendData(json);
     } catch (e) {
       console.error('Ошибка sendData', e);
       tg.showAlert?.('Не удалось отправить результат 😕');
