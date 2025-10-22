@@ -82,16 +82,10 @@ export default function Scoreboard() {
     const payload: MatchPayload = { type: 'match_result', teamA, teamB, sets: buildPayloadSets() };
     setLastPayload(payload);
 
-    if (!available || !tg?.sendData) {
-      alert('Открой приложение через кнопку в боте Telegram.');
-      return;
-    }
-
     try {
       const json = JSON.stringify(payload);
       console.log('Sending to bot:', json);
-      tg.sendData(json);
-      tg.showAlert?.('Результат отправлен боту ✅');
+      sendData(JSON.stringify(json));
     } catch (e) {
       console.error('Ошибка sendData', e);
       tg.showAlert?.('Не удалось отправить результат 😕');
