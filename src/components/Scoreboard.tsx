@@ -99,7 +99,7 @@ export default function Scoreboard() {
         }
       } catch (e) {
         console.error(e);
-        tg?.showAlert?.('Сеть недоступна');
+        tg?.showAlert?.('Сеть недоступна' + e);
       }
       return;
     }
