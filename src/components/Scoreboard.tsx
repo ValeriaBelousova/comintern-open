@@ -78,7 +78,6 @@ export default function Scoreboard() {
     console.log('Sending ping:', payload);
 
     if (queryId) {
-      tg?.showAlert?.('queryId' + queryId);
       // INLINE-РЕЖИМ: шлём на backend -> answerWebAppQuery
       try {
         const res = await fetch('https://comintern-open.up.railway.app/api/webapp/submit', {
