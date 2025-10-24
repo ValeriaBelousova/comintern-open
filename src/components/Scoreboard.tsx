@@ -78,9 +78,10 @@ export default function Scoreboard() {
     console.log('Sending ping:', payload);
 
     if (queryId) {
+      tg?.showAlert?.('queryId' + queryId);
       // INLINE-РЕЖИМ: шлём на backend -> answerWebAppQuery
       try {
-        const res = await fetch('/api/webapp/submit', {
+        const res = await fetch('https://comintern-open.up.railway.app/api/webapp/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -93,7 +94,7 @@ export default function Scoreboard() {
         if (!res.ok) {
           const text = await res.text();
           console.error('submit failed:', text);
-          tg?.showAlert?.('Ошибка отправки на сервер');
+          tg?.showAlert?.('submit failed:' + text);
         } else {
           tg?.showAlert?.('Ping отправлен через backend ✅');
         }
