@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/comintern-open/static/css/main.fb665e37.css",
-    "main.js": "/comintern-open/static/js/main.b2657881.js",
+    "main.js": "/comintern-open/static/js/main.893bc8f5.js",
     "static/js/453.4132caa8.chunk.js": "/comintern-open/static/js/453.4132caa8.chunk.js",
     "index.html": "/comintern-open/index.html",
     "main.fb665e37.css.map": "/comintern-open/static/css/main.fb665e37.css.map",
-    "main.b2657881.js.map": "/comintern-open/static/js/main.b2657881.js.map",
+    "main.893bc8f5.js.map": "/comintern-open/static/js/main.893bc8f5.js.map",
     "453.4132caa8.chunk.js.map": "/comintern-open/static/js/453.4132caa8.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.fb665e37.css",
-    "static/js/main.b2657881.js"
+    "static/js/main.893bc8f5.js"
   ]
 }
