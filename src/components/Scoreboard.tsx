@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
@@ -12,6 +12,16 @@ import DebugPanel from './DebugPanel';
 // ✅ tma.js — берём launch params и «сырые» initData
 import { useRawInitData, useLaunchParams, sendData } from '@tma.js/sdk-react';
 
+
+function useQueryId(): string | undefined {
+    const raw = useRawInitData(); // string | null, вида "query_id=...&user=...&hash=..."
+    return useMemo(() => {
+      if (!raw) return undefined;
+      const p = new URLSearchParams(raw);
+      return p.get('query_id') ?? undefined;
+    }, [raw]);
+  }
+
 export default function Scoreboard() {
   const dispatch = useAppDispatch();
   const { teamA, teamB, gamesA, gamesB, sets, tiebreakActive, tbA, tbB } = useAppSelector(s => s.match);
@@ -19,6 +29,7 @@ export default function Scoreboard() {
   // raw initData: непустая строка => запущено из Telegram
   const rawInitData = useRawInitData();
   const lp = useLaunchParams();
+  const queryId = useQueryId(); 
 
   const available = useMemo(
     () => typeof rawInitData === 'string' && rawInitData.length > 0,
@@ -61,12 +72,41 @@ export default function Scoreboard() {
     return result;
   };
 
-  const handlePing = () => {
+  const handlePing = useCallback(async () => {
     const payload = { type: 'ping', timestamp: Date.now(), message: 'Ping from frontend' };
     setLastPayload(payload);
     console.log('Sending ping:', payload);
+
+    if (queryId) {
+      // INLINE-РЕЖИМ: шлём на backend -> answerWebAppQuery
+      try {
+        const res = await fetch('/api/webapp/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query_id: queryId,
+            payload,
+            // raw initData нужно для верификации подписи на бэке
+            init_data_raw: tg?.initData || '',
+          }),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('submit failed:', text);
+          tg?.showAlert?.('Ошибка отправки на сервер');
+        } else {
+          tg?.showAlert?.('Ping отправлен через backend ✅');
+        }
+      } catch (e) {
+        console.error(e);
+        tg?.showAlert?.('Сеть недоступна');
+      }
+      return;
+    }
+    // МЕНЮ/REPLY-КЛАВА: можно отправлять напрямую
     sendData(JSON.stringify(payload));
-  };
+    tg?.showAlert?.('Ping отправлен через sendData ✅');
+  }, [queryId, tg]);
 
   const resendLast = () => {
     if (!lastPayload) return;
